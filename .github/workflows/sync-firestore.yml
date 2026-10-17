@@ -1,0 +1,28 @@
+name: Sync NEXUS STORE to Firestore
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: GitHub Release tag to sync
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download game metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir -p /tmp/nexus-meta
+          gh release download "$TAG" --repo "$REPO" --pattern nexus-game.json --dir /tmp/nexus-meta
+      - name: Install Firebase Admin SDK
+        run: npm install --prefix /tmp/nexus-firebase firebase-admin@13
+      - name: Update Cloud Firestore
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node .github/scripts/sync-firestore.cjs /tmp/nexus-meta/nexus-game.json
