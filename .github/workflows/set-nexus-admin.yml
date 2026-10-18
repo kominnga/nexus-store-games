@@ -1,0 +1,30 @@
+
+name: NEXUS Admin Setup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  set-admin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Firebase Admin
+        run: npm install --no-save --package-lock=false firebase-admin
+
+      - name: Register NEXUS administrator
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          TARGET_UID: ${{ secrets.NEXUS_ADMIN_UID }}
+        run: node scripts/set-nexus-admin.js
