@@ -1,12 +1,13 @@
 
-const admin = require("firebase-admin");
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getAuth } = require("firebase-admin/auth");
 
 const serviceAccount = JSON.parse(
   process.env.FIREBASE_SERVICE_ACCOUNT
 );
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+initializeApp({
+  credential: cert(serviceAccount),
   projectId: "onrain-game"
 });
 
@@ -17,19 +18,18 @@ async function main() {
     throw new Error("管理者UIDが指定されていません");
   }
 
-  const user = await admin.auth().getUser(uid);
+  const auth = getAuth();
+  const user = await auth.getUser(uid);
 
-  const claims = {
+  await auth.setCustomUserClaims(uid, {
     ...(user.customClaims || {}),
     nexusAdmin: true
-  };
+  });
 
-  await admin.auth().setCustomUserClaims(uid, claims);
-
-  console.log("NEXUS STOREの管理者登録が完了しました");
+  console.log("NEXUS STORE 管理者登録成功！");
 }
 
 main().catch(error => {
-  console.error(error.message);
+  console.error(error);
   process.exit(1);
 });
